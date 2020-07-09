@@ -1,0 +1,22 @@
+{
+  "name": "azafran_project_bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for handling requests of 'Azafran' project API",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yeguacelestial/azafran_project_bot.git"
+  },
+  "author": "Yegua Celestial",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yeguacelestial/azafran_project_bot/issues"
+  },
+  "homepage": "https://github.com/yeguacelestial/azafran_project_bot#readme",
+  "dependencies": {
+    "node-fetch": "^2.6.0"
+  }
+}
