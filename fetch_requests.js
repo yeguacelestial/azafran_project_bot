@@ -14,19 +14,19 @@ fetch(url)
     })
 
 // POST request
-let denuncia = {
-    "genero": "M",
-    "denuncia": "Testimonio enviado desde NodeJS",
-    "edad": 2,
-    "escuela": 7
-}
+// let denuncia = {
+//     "genero": "M",
+//     "denuncia": "Testimonio enviado desde NodeJS",
+//     "edad": 2,
+//     "escuela": 7
+// }
 
-fetch(url, {
-    method: 'POST',
-    body: JSON.stringify(denuncia),
-    headers: {
-        'Content-Type': 'application/json'
-    }
-}).then(res => res.json())
-.catch(error => console.error(`[-] Error: ${error}`))
-.then(response => console.log(`[+] Success: ${response}`))
+// fetch(url, {
+//     method: 'POST',
+//     body: JSON.stringify(denuncia),
+//     headers: {
+//         'Content-Type': 'application/json'
+//     }
+// }).then(res => res.json())
+// .catch(error => console.error(`[-] Error: ${error}`))
+// .then(response => console.log(`[+] Success: ${response}`))
