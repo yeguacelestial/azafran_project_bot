@@ -1,5 +1,7 @@
 // Import Telegraf library
 const Telegraf = require('telegraf')
+const { Markup } = require('telegraf')
+const { Extra } = require('telegraf')
 
 // Import config data
 const config = require('./config')
@@ -47,6 +49,15 @@ bot.command('ayuda', (ctx) => {
 // Denuncias recibidas
 bot.command('denuncias_recibidas', (ctx) => {
     ctx.reply('Denuncias recibidas')
+
+    // Display inline buttons
+    const keyboard = Markup.inlineKeyboard([
+        Markup.urlButton('Plataforma', 'http://exponatuagresor.herokuapp.com/'),
+        Markup.callbackButton('Delete', 'delete')
+    ])
+
+    ctx.telegram.sendCopy(ctx.chat.id, ctx.message, Extra.markup(keyboard))
+
 })
 
 // Denuncias aceptadas
