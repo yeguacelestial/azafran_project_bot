@@ -1,11 +1,8 @@
 // Import Telegraf library
 const Telegraf = require('telegraf')
-const extra = require('telegraf/extra')
-const markup = extra.markdown()
 
 // Import config data
 const config = require('./config')
-const { markdown } = require('telegraf/extra')
 
 // Get token from config data
 const token = config.token
@@ -13,12 +10,24 @@ const token = config.token
 // Initialize bot object
 const bot = new Telegraf(token)
 
+// Initialize timer
+let timer = 0
+
 /* BOT COMMANDS */
 // Start
 bot.start( (ctx) => {
     ctx.reply(`¡Hola, ${ctx.from.first_name}! Soy el bot de 'Expón a tu agresor.'`)
-    ctx.reply('Ahora mismo me encuentro en desarrollo, pero ¡puedes regresar más tarde!')
-    ctx.reply('Página oficial de la plataforma: http://exponatuagresor.herokuapp.com\n')
+    
+    timer += 1000
+    setTimeout(
+        () => {ctx.reply('Ahora mismo me encuentro en desarrollo, pero ¡puedes regresar más tarde!')}
+        , timer)
+    
+    timer += 1000
+    setTimeout(
+        () => {ctx.replyWithHTML('Pulsa <a href="http://exponatuagresor.herokuapp.com/">aquí</a> para visitar la página oficial de la plataforma.\n')}
+        , timer)
+
     console.log(`\n[+] BOT INICIADO`)
     console.log(`[*] Usuario: ${ctx.from.username}`)
     console.log(`[*] Nombre: ${ctx.from.first_name}`)
