@@ -64,7 +64,7 @@ bot.command('testimonios_recibidos', (ctx) => {
 
 // Comando para ver Testimonios publicados
 bot.command('testimonios_publicados', (ctx) => {
-    // Create keyboard
+    // Create inline keyboard
     const keyboard = Markup.inlineKeyboard([
         Markup.callbackButton('⬅️ Anterior', 'anterior'),
         Markup.callbackButton('Eliminar', 'eliminar'),
@@ -74,26 +74,54 @@ bot.command('testimonios_publicados', (ctx) => {
     // Get current Testimonios json file
     eataAPI.getTestimoniosPublicados(endpoint_url).then(
         (json) => {
-            // Do something with testimonios publicados
-            ctx.replyWithHTML(`Actualmente, hay <b>${json.length}</b> testimonios publicados.`)
+
+            // Initial data
+            let testimonio_actual = 0
+            let cantidad_testimonios = json.length
+
+            function actualizarTestimonio(json, testimonio_actual, cantidad_testimonios){
+                // Data of Testimonios
+                let id_testimonio = JSON.stringify(json[testimonio_actual].id)
+                let genero_testimonio = JSON.stringify(json[testimonio_actual].genero)
+                let contenido_testimonio = json[testimonio_actual].denuncia
+                
+                // Message data
+                let mensaje_cantidad_testimonios = `Actualmente, hay <b>${cantidad_testimonios}</b> testimonios publicados.`
+                let mensaje_id_testimonio = `<b><i>ID del testimonio:</i></b> ${id_testimonio} \n`
+                let mensaje_genero_testimonio = `<b><i>Género:</i></b> ${genero_testimonio} \n`
+                let mensaje_contenido_testimonio = `\n<b><i>Testimonio:</i></b>\n${contenido_testimonio}`
+
+                return {mensaje_cantidad_testimonios, mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio}
+            }
+
+            // Cantidad of testimonios
+            let {mensaje_cantidad_testimonios} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+            ctx.replyWithHTML(mensaje_cantidad_testimonios)
 
             // Display testimonio
             setTimeout(() => {
-                ctx.replyWithHTML(`<b><i>ID del testimonio:</i></b> ${JSON.stringify(json[18].id)} \n`+
-                                  `<b><i>Género:</i></b> ${JSON.stringify(json[18].genero)} \n`+
-                                  `\n<b><i>Testimonio:</i></b>\n`+
-                                    `${json[18].denuncia}`
-                , Extra.markup(keyboard))}, 1000)
+                let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+
+                ctx.replyWithHTML(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
+                , Extra.HTML().markup(keyboard))}, 1000)
             
             // Handling buttons:
                 // Button 'Anterior'
                 bot.action('siguiente', ctx => {
-                    return ctx.reply('Pulsaste el botón Siguiente')
+                    testimonio_actual += 1
+                    let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+
+                    ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
+                    , Extra.HTML().markup(keyboard))
                 })
 
                 // Button 'Siguiente'
                 bot.action('anterior', ctx => {
-                    return ctx.reply('Pulsaaste el botón Anterior')
+                    testimonio_actual -= 1
+                    let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+
+                    ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
+                    , Extra.HTML().markup(keyboard))
                 })
                 
                 // Button 'Eliminar'
@@ -128,4 +156,12 @@ bot.launch()
 // Clear keuboard
 // bot.on('text', (ctx) => {
 //     ctx.reply(':)', Markup.removeKeyboard().extra())
+// })
+
+// Edit message and inline keyboard / callback functions when someone clicks on 'coke'
+// bot.action('coke', (ctx) => {
+// 	ctx.editMessageText('Now: <b>7up</b> or <b>Fanta</b>?', Extra.HTML().markup(m => m.inlineKeyboard([
+// 			m.callbackButton('7up', '7up'),
+// 			m.callbackButton('Fanta', 'fanta'),
+// 		  ])))
 // })
