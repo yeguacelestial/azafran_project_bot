@@ -5,7 +5,7 @@ const fetch = require('node-fetch')
 const endpoint_url = 'http://exponatuagresor.herokuapp.com/api/denuncia/'
 
 // Function for fetching testimonios
-function getTestimonios(endpoint_url){
+function getTestimoniosPublicados(endpoint_url){
     return fetch(endpoint_url)
         .then(
             response => response.json()
@@ -53,7 +53,7 @@ function postTestimonios(endpoint_url, genero, denuncia, edad, escuela){
 
 // Export functions
 module.exports = {
-    getTestimonios: getTestimonios,
+    getTestimoniosPublicados: getTestimoniosPublicados,
     postTestimonios: postTestimonios,
     endpoint_url: endpoint_url
 }

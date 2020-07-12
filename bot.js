@@ -55,22 +55,34 @@ bot.command('ayuda', (ctx) => {
 bot.command('testimonios_recibidos', (ctx) => {
     // Display inline buttons
     const keyboard = Markup.inlineKeyboard([
-        Markup.callbackButton('Anterior', 'anterior'),
-        Markup.urlButton('Publicar', 'http://exponatuagresor.herokuapp.com/'),
-        Markup.callbackButton('Siguiente', 'siguiente')
+        Markup.callbackButton('⬅️ Anterior', 'anterior'),
+        Markup.urlButton('💬Publicar', 'http://exponatuagresor.herokuapp.com/'),
+        Markup.callbackButton('Siguiente ➡️', 'siguiente')
     ])
 
-    eataAPI.getTestimonios(endpoint_url).then(
-        (json) => {
-            // Do something with testimonios
-            ctx.reply(`Actualmente, hay ${json.length} testimonios publicados.`, Extra.markup(keyboard))
-        }
-    )
 })
 
 // Denuncias aceptadas
 bot.command('testimonios_publicados', (ctx) => {
-    ctx.reply('Testimonios publicados en la plataforma')
+    const keyboard = Markup.inlineKeyboard([
+        Markup.callbackButton('⬅️ Anterior', 'anterior'),
+        Markup.urlButton('Eliminar', 'http://exponatuagresor.herokuapp.com/'),
+        Markup.callbackButton('Siguiente ➡️', 'siguiente')
+    ])
+
+    eataAPI.getTestimoniosPublicados(endpoint_url).then(
+        (json) => {
+            // Do something with testimonios publicados
+            ctx.replyWithHTML(`Actualmente, hay <b>${json.length}</b> testimonios publicados.`)
+
+            setTimeout(() => {
+                ctx.replyWithHTML(`<b><i>ID del testimonio:</i></b> ${JSON.stringify(json[29].id)} \n`+
+                                  `<b><i>Género:</i></b> ${JSON.stringify(json[29].genero)} \n`+
+                                  `\n<b><i>Testimonio:</i></b>\n`+
+                                    `${json[18].denuncia}`
+                , Extra.markup(keyboard))}, 1000)
+        }
+    )
 })
 
 // Launch bot
