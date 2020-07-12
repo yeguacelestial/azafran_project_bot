@@ -36,6 +36,14 @@ function postTestimonios(endpoint_url, genero, denuncia, edad, escuela){
         .then(json => {console.log(`[+] Success: ${JSON.stringify(json)}`);return json})
 }
 
+// Function for deleting testimonios
+function deleteTestimonio(endpoint_url, id_testimonio){
+    return fetch(endpoint_url + id_testimonio, {
+        method: 'delete'
+    })
+    .then(response => response.json())
+}
+
 // Calling testimonios function and doing something with the json file
 // getTestimonios(endpoint_url).then(
 //     (json) => {
@@ -51,9 +59,13 @@ function postTestimonios(endpoint_url, genero, denuncia, edad, escuela){
 //      edad=5,
 //      escuela=6)
 
+// Deleting a testimonio from deleteTestimonio function
+// deleteTestimonio(endpoint_url, 8)
+
 // Export functions
 module.exports = {
     getTestimoniosPublicados: getTestimoniosPublicados,
     postTestimonios: postTestimonios,
+    deleteTestimonio: deleteTestimonio,
     endpoint_url: endpoint_url
 }
