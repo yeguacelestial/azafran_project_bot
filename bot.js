@@ -41,7 +41,7 @@ bot.start( (ctx) => {
     console.log(`[*] Mensaje: ${ctx.message.text}`)
 })
 
-// Ayuda
+// Comando 'Ayuda'
 bot.command('ayuda', (ctx) => {
     ctx.replyWithHTML('<b><i>Comandos del bot</i></b>\n'+
     '/start - Inicializa el bot.\n'+
@@ -51,7 +51,7 @@ bot.command('ayuda', (ctx) => {
     )
 })
 
-// Denuncias recibidas
+// Comando para ver Testimonios recibidos
 bot.command('testimonios_recibidos', (ctx) => {
     // Display inline buttons
     const keyboard = Markup.inlineKeyboard([
@@ -62,27 +62,48 @@ bot.command('testimonios_recibidos', (ctx) => {
 
 })
 
-// Denuncias aceptadas
+// Comando para ver Testimonios publicados
 bot.command('testimonios_publicados', (ctx) => {
+    // Create keyboard
     const keyboard = Markup.inlineKeyboard([
         Markup.callbackButton('⬅️ Anterior', 'anterior'),
-        Markup.urlButton('Eliminar', 'http://exponatuagresor.herokuapp.com/'),
+        Markup.callbackButton('Eliminar', 'eliminar'),
         Markup.callbackButton('Siguiente ➡️', 'siguiente')
     ])
 
+    // Get current Testimonios json file
     eataAPI.getTestimoniosPublicados(endpoint_url).then(
         (json) => {
             // Do something with testimonios publicados
             ctx.replyWithHTML(`Actualmente, hay <b>${json.length}</b> testimonios publicados.`)
 
+            // Display testimonio
             setTimeout(() => {
-                ctx.replyWithHTML(`<b><i>ID del testimonio:</i></b> ${JSON.stringify(json[29].id)} \n`+
-                                  `<b><i>Género:</i></b> ${JSON.stringify(json[29].genero)} \n`+
+                ctx.replyWithHTML(`<b><i>ID del testimonio:</i></b> ${JSON.stringify(json[18].id)} \n`+
+                                  `<b><i>Género:</i></b> ${JSON.stringify(json[18].genero)} \n`+
                                   `\n<b><i>Testimonio:</i></b>\n`+
                                     `${json[18].denuncia}`
                 , Extra.markup(keyboard))}, 1000)
+            
+            // Handling buttons:
+                // Button 'Anterior'
+                bot.action('siguiente', ctx => {
+                    return ctx.reply('Pulsaste el botón Siguiente')
+                })
+
+                // Button 'Siguiente'
+                bot.action('anterior', ctx => {
+                    return ctx.reply('Pulsaaste el botón Anterior')
+                })
+                
+                // Button 'Eliminar'
+                bot.action('eliminar', ctx => {
+                    return ctx.reply('Eliminaste el testimonio')
+                })
+
         }
     )
+
 })
 
 // Launch bot
