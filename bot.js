@@ -2,7 +2,7 @@
 const Telegraf = require('telegraf')
 const { Markup } = require('telegraf')
 const { Extra } = require('telegraf')
-
+    
 // Import config data
 const config = require('./config')
 
@@ -10,15 +10,20 @@ const config = require('./config')
 const token = config.token
 
 // Initialize bot object
-const bot = new Telegraf(token)
+const bot = new Telegraf(token);
 
-// Initialize timer
-let timer = 0
+// Import functions from fetch_requests.js
+const eataAPI = require('./fetch_requests')
+const endpoint_url = eataAPI.endpoint_url
+
 
 /* BOT COMMANDS */
 // Start
 bot.start( (ctx) => {
     ctx.reply(`¡Hola, ${ctx.from.first_name}! Soy el bot de 'Expón a tu agresor.'`)
+    
+    // Initialize timer
+    let timer = 0
     
     timer += 1000
     setTimeout(
@@ -47,23 +52,47 @@ bot.command('ayuda', (ctx) => {
 })
 
 // Denuncias recibidas
-bot.command('denuncias_recibidas', (ctx) => {
-    ctx.reply('Denuncias recibidas')
-
+bot.command('testimonios_recibidos', (ctx) => {
     // Display inline buttons
     const keyboard = Markup.inlineKeyboard([
-        Markup.urlButton('Plataforma', 'http://exponatuagresor.herokuapp.com/'),
-        Markup.callbackButton('Delete', 'delete')
+        Markup.callbackButton('Anterior', 'anterior'),
+        Markup.urlButton('Publicar', 'http://exponatuagresor.herokuapp.com/'),
+        Markup.callbackButton('Siguiente', 'siguiente')
     ])
 
-    ctx.telegram.sendCopy(ctx.chat.id, ctx.message, Extra.markup(keyboard))
-
+    eataAPI.getTestimonios(endpoint_url).then(
+        (json) => {
+            // Do something with testimonios
+            ctx.reply(`Actualmente, hay ${json.length} testimonios publicados.`, Extra.markup(keyboard))
+        }
+    )
 })
 
 // Denuncias aceptadas
-bot.command('denuncias_publicadas', (ctx) => {
-    ctx.reply('Denuncias aceptadas')
+bot.command('testimonios_publicados', (ctx) => {
+    ctx.reply('Testimonios publicados en la plataforma')
 })
 
 // Launch bot
 bot.launch()
+
+/* Other things */
+
+//  Create a custom keyboard
+// bot.command('custom', ({reply}) => {
+//     return reply('Custom buttons keyboard', Markup
+//         .keyboard([
+//             ['Search', 'Popular'], // Row1 with 1 button
+//             ['Setting', 'Feedback'],
+//             ['Ads', 'Rate Us', 'Share']
+//         ])
+//         .oneTime()
+//         .resize()
+//         .extra()
+//     )
+// })
+
+// Clear keuboard
+// bot.on('text', (ctx) => {
+//     ctx.reply(':)', Markup.removeKeyboard().extra())
+// })
