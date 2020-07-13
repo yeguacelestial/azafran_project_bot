@@ -1,3 +1,4 @@
+// TODO: Change inline buttons at the first and the last testimonio publicado
 // Import Telegraf library
 const Telegraf = require('telegraf')
 const { Markup } = require('telegraf')
@@ -74,11 +75,7 @@ bot.command('testimonios_publicados', (ctx) => {
     // Get current Testimonios json file
     eataAPI.getTestimoniosPublicados(endpoint_url).then(
         (json) => {
-
-            // Initial data
-            let testimonio_actual = 0
-            let cantidad_testimonios = json.length
-
+            // Update Inline testimonio content
             function actualizarTestimonio(json, testimonio_actual, cantidad_testimonios){
                 // Data of Testimonios
                 let id_testimonio = JSON.stringify(json[testimonio_actual].id)
@@ -94,41 +91,56 @@ bot.command('testimonios_publicados', (ctx) => {
                 return {mensaje_cantidad_testimonios, mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio}
             }
 
-            // Cantidad of testimonios
-            let {mensaje_cantidad_testimonios} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
-            ctx.replyWithHTML(mensaje_cantidad_testimonios)
+            // Initial data
+            let testimonio_actual = 0
+            let cantidad_testimonios = json.length
 
-            // Display testimonio
-            setTimeout(() => {
-                let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+            if (cantidad_testimonios > 0 && testimonio_actual < json.length){
+                // Cantidad of testimonios
+                let {mensaje_cantidad_testimonios} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+                ctx.replyWithHTML(mensaje_cantidad_testimonios)
 
-                ctx.replyWithHTML(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
-                , Extra.HTML().markup(keyboard))}, 1000)
-            
-            // Handling buttons:
-                // Button 'Anterior'
-                bot.action('siguiente', ctx => {
-                    testimonio_actual += 1
+                // Display testimonio
+                setTimeout(() => {
                     let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
 
-                    ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
-                    , Extra.HTML().markup(keyboard))
-                })
-
-                // Button 'Siguiente'
-                bot.action('anterior', ctx => {
-                    testimonio_actual -= 1
-                    let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
-
-                    ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
-                    , Extra.HTML().markup(keyboard))
-                })
+                    ctx.replyWithHTML(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
+                    , Extra.HTML().markup(keyboard))}, 1000)
                 
-                // Button 'Eliminar'
-                bot.action('eliminar', ctx => {
-                    return ctx.reply('Eliminaste el testimonio')
-                })
+                // Handling buttons:
+                    // Button 'Anterior'
+                    bot.action('siguiente', ctx => {
+                        testimonio_actual += 1
+                        let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
 
+                        ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
+                        , Extra.HTML().markup(keyboard))
+                    })
+
+                    // Button 'Siguiente'
+                    bot.action('anterior', ctx => {
+                        testimonio_actual -= 1
+                        let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+
+                        ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
+                        , Extra.HTML().markup(keyboard))
+                    })
+                    
+                    // Button 'Eliminar'
+                    bot.action('eliminar', ctx => {
+                        let id_testimonio = json[testimonio_actual].id
+                        eataAPI.deleteTestimonio(endpoint_url, id_testimonio)
+
+                        ctx.editMessageText(`<i>Eliminaste el testimonio <b>${id_testimonio}</b></i>.\nIntroduce /testimonios_publicados si quieres seguir consultando los testimonios publicados en la plataforma.`
+                        , Extra.HTML())
+                    })
+
+            } else if (cantidad_testimonios === 0){
+                ctx.reply('Aún no hay ningún testimonio publicado.')
+
+            } else {
+                ctx.reply('Sucedió algo raro. Por favor, contacta a @hombrecelestial.')
+            }
         }
     )
 
