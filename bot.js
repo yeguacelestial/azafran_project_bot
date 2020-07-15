@@ -1,4 +1,4 @@
-// TODO: Change inline buttons at the first and the last testimonio publicado
+// TODO: Command /denuncias_recibidas
 // Import Telegraf library
 const Telegraf = require('telegraf')
 const { Markup } = require('telegraf')
@@ -65,11 +65,23 @@ bot.command('testimonios_recibidos', (ctx) => {
 
 // Comando para ver Testimonios publicados
 bot.command('testimonios_publicados', (ctx) => {
-    // Create inline keyboard
-    const keyboard = Markup.inlineKeyboard([
+    // Create initial keyboard
+    const initial_keyboard = Markup.inlineKeyboard([
+        Markup.callbackButton('Eliminar', 'eliminar'),
+        Markup.callbackButton('Siguiente ➡️', 'siguiente')
+    ])
+
+    // Create normal keyboard
+    const normal_keyboard = Markup.inlineKeyboard([
         Markup.callbackButton('⬅️ Anterior', 'anterior'),
         Markup.callbackButton('Eliminar', 'eliminar'),
         Markup.callbackButton('Siguiente ➡️', 'siguiente')
+    ])
+
+    // Create ending keyboard
+    const ending_keyboard = Markup.inlineKeyboard([
+        Markup.callbackButton('⬅️ Anterior', 'anterior'),
+        Markup.callbackButton('Eliminar', 'eliminar'),
     ])
 
     // Get current Testimonios json file
@@ -106,25 +118,37 @@ bot.command('testimonios_publicados', (ctx) => {
                     actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
 
                     ctx.replyWithMarkdown(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
-                    , Extra.markdown().markup(keyboard))}, 1000)
+                    , Extra.markdown().markup(initial_keyboard))}, 1000)
                 
                 // Handling buttons:
-                    // Button 'Anterior'
+                    // Button 'Siguiente'
                     bot.action('siguiente', ctx => {
                         testimonio_actual += 1
                         let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
 
-                        ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
-                        , Extra.markdown().markup(keyboard))
+                        // If testimonio is the last one, display ending keyboard
+                        if (testimonio_actual === json.length - 1){
+                            ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
+                            , Extra.markdown().markup(ending_keyboard))
+                        } else {
+                            ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
+                            , Extra.markdown().markup(normal_keyboard))
+                        }
                     })
 
-                    // Button 'Siguiente'
+                    // Button 'Anterior'
                     bot.action('anterior', ctx => {
                         testimonio_actual -= 1
                         let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
-
-                        ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
-                        , Extra.markdown().markup(keyboard))
+                        
+                        // If testimonio actual is the first one, display initial keyboard
+                        if (testimonio_actual === 0){
+                            ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
+                            , Extra.markdown().markup(initial_keyboard))
+                        } else {
+                            ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
+                                , Extra.markdown().markup(normal_keyboard))
+                        }
                     })
                     
                     // Button 'Eliminar'
@@ -132,8 +156,8 @@ bot.command('testimonios_publicados', (ctx) => {
                         let id_testimonio = json[testimonio_actual].id
                         eataAPI.deleteTestimonio(endpoint_url, id_testimonio)
 
-                        ctx.editMessageText(`<i>Eliminaste el testimonio <b>${id_testimonio}</b></i>.\nIntroduce /testimonios_publicados si quieres seguir consultando los testimonios publicados en la plataforma.`
-                        , Extra.markdown())
+                        ctx.editMessageText(`Eliminaste el testimonio <b>${id_testimonio}</b>.\nIntroduce <i>/testimonios_publicados</i> si quieres seguir consultando los testimonios publicados en la plataforma.`
+                        , Extra.HTML())
                     })
 
             } else if (cantidad_testimonios === 0){
