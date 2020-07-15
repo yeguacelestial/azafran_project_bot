@@ -83,10 +83,10 @@ bot.command('testimonios_publicados', (ctx) => {
                 let contenido_testimonio = json[testimonio_actual].denuncia
                 
                 // Message data
-                let mensaje_cantidad_testimonios = `Actualmente, hay <b>${cantidad_testimonios}</b> testimonios publicados.`
-                let mensaje_id_testimonio = `<b><i>ID del testimonio:</i></b> ${id_testimonio} \n`
-                let mensaje_genero_testimonio = `<b><i>Género:</i></b> ${genero_testimonio} \n`
-                let mensaje_contenido_testimonio = `\n<b><i>Testimonio:</i></b>\n${contenido_testimonio}`
+                let mensaje_cantidad_testimonios = `Actualmente, hay ***${cantidad_testimonios} testimonios publicados.***`
+                let mensaje_id_testimonio = `***ID del testimonio:*** ${id_testimonio} \n`
+                let mensaje_genero_testimonio = `***Género:*** ${genero_testimonio} \n`
+                let mensaje_contenido_testimonio = `\n***Testimonio:***\n${contenido_testimonio}`
 
                 return {mensaje_cantidad_testimonios, mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio}
             }
@@ -98,14 +98,15 @@ bot.command('testimonios_publicados', (ctx) => {
             if (cantidad_testimonios > 0 && testimonio_actual < json.length){
                 // Cantidad of testimonios
                 let {mensaje_cantidad_testimonios} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
-                ctx.replyWithHTML(mensaje_cantidad_testimonios)
+                ctx.replyWithMarkdown(mensaje_cantidad_testimonios)
 
                 // Display testimonio
                 setTimeout(() => {
-                    let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+                    let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} =                     
+                    actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
 
-                    ctx.replyWithHTML(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
-                    , Extra.HTML().markup(keyboard))}, 1000)
+                    ctx.replyWithMarkdown(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
+                    , Extra.markdown().markup(keyboard))}, 1000)
                 
                 // Handling buttons:
                     // Button 'Anterior'
@@ -114,7 +115,7 @@ bot.command('testimonios_publicados', (ctx) => {
                         let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
 
                         ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
-                        , Extra.HTML().markup(keyboard))
+                        , Extra.markdown().markup(keyboard))
                     })
 
                     // Button 'Siguiente'
@@ -123,7 +124,7 @@ bot.command('testimonios_publicados', (ctx) => {
                         let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
 
                         ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
-                        , Extra.HTML().markup(keyboard))
+                        , Extra.markdown().markup(keyboard))
                     })
                     
                     // Button 'Eliminar'
@@ -132,7 +133,7 @@ bot.command('testimonios_publicados', (ctx) => {
                         eataAPI.deleteTestimonio(endpoint_url, id_testimonio)
 
                         ctx.editMessageText(`<i>Eliminaste el testimonio <b>${id_testimonio}</b></i>.\nIntroduce /testimonios_publicados si quieres seguir consultando los testimonios publicados en la plataforma.`
-                        , Extra.HTML())
+                        , Extra.markdown())
                     })
 
             } else if (cantidad_testimonios === 0){
@@ -142,7 +143,7 @@ bot.command('testimonios_publicados', (ctx) => {
                 ctx.reply('Sucedió algo raro. Por favor, contacta a @hombrecelestial.')
             }
         }
-    )
+    ).catch(error => {console.log(`Pasó algo raro: ${error}\n`)})
 
 })
 

@@ -12,7 +12,7 @@ function getTestimoniosPublicados(endpoint_url){
         )
         .then(
             (testimonios) => {return testimonios}
-        )
+        ).catch(error => {console.log(`Pasó algo raro: ${error}\n`)})
 }
 
 // Function for posting testimonios
