@@ -34,9 +34,13 @@ function postTestimonio(endpoint_url, json_testimonio){
 // Function for deleting testimonios
 function deleteTestimonio(endpoint_url, id_testimonio){
     return fetch(endpoint_url + id_testimonio, {
-        method: 'delete'
+        method: 'delete',
+        headers: {
+            'Content-Type': 'application/json'
+        }
     })
-    .then(response => response.json())
+    .then(response => {return response.text()})
+    .then(text => console.log(text))
 }
 
 // Calling testimonios function and doing something with the json file

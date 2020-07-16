@@ -148,6 +148,7 @@ bot.command('testimonios_recibidos', (ctx) => {
                     bot.action('publicar', ctx => {
                         let testimonio_a_publicar = json[testimonio_actual]
                         eataAPI.postTestimonio(api_denuncias_publicadas, testimonio_a_publicar)
+                        eataAPI.deleteTestimonio(api_denuncias_recibidas, testimonio_a_publicar.id)
 
                         ctx.editMessageText(`Publicaste el testimonio <b>${JSON.stringify(testimonio_a_publicar.id)}.</b> Puedes ver los testimonios publicados pulsando <a href="${href}/testimonios">aqui, </a>o con el comando de /testimonios_publicados.\n\nIntroduce el comando <i>/testimonios_recibidos</i> si quieres seguir consultando los testimonios recibidos.`
                         , Extra.HTML())
@@ -158,7 +159,7 @@ bot.command('testimonios_recibidos', (ctx) => {
                     })
 
             } else if (cantidad_testimonios === 0){
-                ctx.reply('Aún no hay ningún testimonio publicado.')
+                ctx.reply('Aún no se ha recibido ningún testimonio.')
 
             } else {
                 ctx.reply('Sucedió algo raro. Por favor, contacta a @hombrecelestial.')
@@ -260,7 +261,7 @@ bot.command('testimonios_publicados', (ctx) => {
                     // Button 'Eliminar'
                     bot.action('eliminar', ctx => {
                         let id_testimonio = json[testimonio_actual].id
-                        eataAPI.deleteTestimonio(endpoint_url, id_testimonio)
+                        eataAPI.deleteTestimonio(api_denuncias_publicadas, id_testimonio)
 
                         ctx.editMessageText(`Eliminaste el testimonio <b>${id_testimonio}</b>.\nIntroduce <i>/testimonios_publicados</i> si quieres seguir consultando los testimonios publicados en la plataforma.`
                         , Extra.HTML())
