@@ -2,10 +2,12 @@
 const fetch = require('node-fetch')
 
 // Endpoint
-const endpoint_url = 'http://exponatuagresor.herokuapp.com/api/denuncia/'
+const api_endpoint_url = 'http://exponatuagresor.herokuapp.com/api/'
+const api_denuncias_recibidas = `${api_endpoint_url}denuncias_recibidas/`
+const api_denuncias_publicadas = `${api_endpoint_url}denuncias_publicadas/`
 
 // Function for fetching testimonios
-function getTestimoniosPublicados(endpoint_url){
+function getTestimonios(endpoint_url){
     return fetch(endpoint_url)
         .then(
             response => response.json()
@@ -16,24 +18,17 @@ function getTestimoniosPublicados(endpoint_url){
 }
 
 // Function for posting testimonios
-function postTestimonios(endpoint_url, genero, denuncia, edad, escuela){
-    let testimonio = {
-        "genero": genero,
-        "denuncia": denuncia,
-        "edad": edad,
-        "escuela": escuela
-    }
-
+function postTestimonio(endpoint_url, json_testimonio){
     fetch(endpoint_url, {
-        method: 'POST',
-        body: JSON.stringify(testimonio),
+        method: 'post',
+        body: JSON.stringify(json_testimonio),
         headers: {
             'Content-Type': 'application/json'
         }
     })
-        .then(response => response.json())
-        .catch(error => console.error(`[-] Error: ${error}`))
+        .then(res => res.json())
         .then(json => {console.log(`[+] Success: ${JSON.stringify(json)}`);return json})
+        .catch(error => console.error(`[-] Error: ${error}`))
 }
 
 // Function for deleting testimonios
@@ -64,8 +59,10 @@ function deleteTestimonio(endpoint_url, id_testimonio){
 
 // Export functions
 module.exports = {
-    getTestimoniosPublicados: getTestimoniosPublicados,
-    postTestimonios: postTestimonios,
+    getTestimonios: getTestimonios,
+    postTestimonio: postTestimonio,
     deleteTestimonio: deleteTestimonio,
-    endpoint_url: endpoint_url
+    api_endpoint_url: api_endpoint_url,
+    api_denuncias_recibidas: api_denuncias_recibidas,
+    api_denuncias_publicadas: api_denuncias_publicadas
 }

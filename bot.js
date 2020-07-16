@@ -1,4 +1,5 @@
-// TODO: Command /denuncias_recibidas
+// TODO: Command /testimonios_recibidos
+
 // Import Telegraf library
 const Telegraf = require('telegraf')
 const { Markup } = require('telegraf')
@@ -15,8 +16,27 @@ const bot = new Telegraf(token);
 
 // Import functions from fetch_requests.js
 const eataAPI = require('./fetch_requests')
-const endpoint_url = eataAPI.endpoint_url
+const endpoint_url = eataAPI.api_endpoint_url
+const api_denuncias_recibidas = eataAPI.api_denuncias_recibidas
+const api_denuncias_publicadas = eataAPI.api_denuncias_publicadas
+const href = 'http://exponatuagresor.herokuapp.com'
 
+/* Main functions */
+// Actualizar testimonio
+function actualizarTestimonio(json, testimonio_actual, cantidad_testimonios, tipo_testimonio){
+    // Data of Testimonios
+    let id_testimonio = JSON.stringify(json[testimonio_actual].id)
+    let genero_testimonio = JSON.stringify(json[testimonio_actual].genero)
+    let contenido_testimonio = json[testimonio_actual].denuncia
+    
+    // Message data
+    let mensaje_cantidad_testimonios = `Actualmente, hay ***${cantidad_testimonios} testimonios ${tipo_testimonio}.***`
+    let mensaje_id_testimonio = `***ID del testimonio:*** ${id_testimonio} \n`
+    let mensaje_genero_testimonio = `***Género:*** ${genero_testimonio} \n`
+    let mensaje_contenido_testimonio = `\n***Testimonio:***\n${contenido_testimonio}`
+
+    return {mensaje_cantidad_testimonios, mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio}
+}
 
 /* BOT COMMANDS */
 // Start
@@ -54,12 +74,97 @@ bot.command('ayuda', (ctx) => {
 
 // Comando para ver Testimonios recibidos
 bot.command('testimonios_recibidos', (ctx) => {
-    // Display inline buttons
-    const keyboard = Markup.inlineKeyboard([
-        Markup.callbackButton('⬅️ Anterior', 'anterior'),
-        Markup.urlButton('💬Publicar', 'http://exponatuagresor.herokuapp.com/'),
+    // Create initial keyboard
+    const initial_keyboard = Markup.inlineKeyboard([
+        Markup.callbackButton('💬Publicar', 'publicar'),
         Markup.callbackButton('Siguiente ➡️', 'siguiente')
     ])
+
+    // Display inline buttons
+    const normal_keyboard = Markup.inlineKeyboard([
+        Markup.callbackButton('⬅️ Anterior', 'anterior'),
+        Markup.callbackButton('💬Publicar', 'publicar'),
+        Markup.callbackButton('Siguiente ➡️', 'siguiente')
+    ])
+
+    // Create ending keyboard
+    const ending_keyboard = Markup.inlineKeyboard([
+        Markup.callbackButton('⬅️ Anterior', 'anterior'),
+        Markup.callbackButton('💬Publicar', 'publicar'),
+    ])
+
+    // Browse through testimonios
+    eataAPI.getTestimonios(api_denuncias_recibidas).then(
+        (json) => {
+            let tipo_testimonio = 'recibidos'
+            let testimonio_actual = 0
+            let cantidad_testimonios = json.length
+
+            if (cantidad_testimonios > 0 && testimonio_actual < json.length){
+                // Cantidad of testimonios
+                let {mensaje_cantidad_testimonios} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios, tipo_testimonio)
+                ctx.replyWithMarkdown(mensaje_cantidad_testimonios)
+
+                // Display testimonio
+                setTimeout(() => {
+                    let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} =                     
+                    actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+
+                    ctx.replyWithMarkdown(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
+                    , Extra.markdown().markup(initial_keyboard))}, 1000)
+                
+                // Handling buttons:
+                    // Button 'Siguiente'
+                    bot.action('siguiente', ctx => {
+                        testimonio_actual += 1
+                        let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+
+                        // If testimonio is the last one, display ending keyboard
+                        if (testimonio_actual === json.length - 1){
+                            ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
+                            , Extra.markdown().markup(ending_keyboard))
+                        } else {
+                            ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
+                            , Extra.markdown().markup(normal_keyboard))
+                        }
+                    })
+
+                    // Button 'Anterior'
+                    bot.action('anterior', ctx => {
+                        testimonio_actual -= 1
+                        let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+                        
+                        // If testimonio actual is the first one, display initial keyboard
+                        if (testimonio_actual === 0){
+                            ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
+                            , Extra.markdown().markup(initial_keyboard))
+                        } else {
+                            ctx.editMessageText(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
+                                , Extra.markdown().markup(normal_keyboard))
+                        }
+                    })
+                    
+                    // Button 'Eliminar'
+                    bot.action('publicar', ctx => {
+                        let testimonio_a_publicar = json[testimonio_actual]
+                        eataAPI.postTestimonio(api_denuncias_publicadas, testimonio_a_publicar)
+
+                        ctx.editMessageText(`Publicaste el testimonio <b>${JSON.stringify(testimonio_a_publicar.id)}.</b> Puedes ver los testimonios publicados pulsando <a href="${href}/testimonios">aqui, </a>o con el comando de /testimonios_publicados.\n\nIntroduce el comando <i>/testimonios_recibidos</i> si quieres seguir consultando los testimonios recibidos.`
+                        , Extra.HTML())
+                    })
+                    .catch(error => {
+                        let testimonio_a_publicar = json[testimonio_actual]
+                        ctx.reply(`No se pudo publicar el testimonio ${testimonio_a_publicar.id}. Contacta a @hombrecelestial y reenviale este mensaje del error:\n:${error}`)
+                    })
+
+            } else if (cantidad_testimonios === 0){
+                ctx.reply('Aún no hay ningún testimonio publicado.')
+
+            } else {
+                ctx.reply('Sucedió algo raro. Por favor, contacta a @hombrecelestial.')
+            }
+        }
+    ).catch(error => {console.log(`Pasó algo raro: ${error}\n`)})
 
 })
 
@@ -85,31 +190,32 @@ bot.command('testimonios_publicados', (ctx) => {
     ])
 
     // Get current Testimonios json file
-    eataAPI.getTestimoniosPublicados(endpoint_url).then(
+    eataAPI.getTestimonios(api_denuncias_publicadas).then(
         (json) => {
             // Update Inline testimonio content
-            function actualizarTestimonio(json, testimonio_actual, cantidad_testimonios){
-                // Data of Testimonios
-                let id_testimonio = JSON.stringify(json[testimonio_actual].id)
-                let genero_testimonio = JSON.stringify(json[testimonio_actual].genero)
-                let contenido_testimonio = json[testimonio_actual].denuncia
+            // function actualizarTestimonio(json, testimonio_actual, cantidad_testimonios){
+            //     // Data of Testimonios
+            //     let id_testimonio = JSON.stringify(json[testimonio_actual].id)
+            //     let genero_testimonio = JSON.stringify(json[testimonio_actual].genero)
+            //     let contenido_testimonio = json[testimonio_actual].denuncia
                 
-                // Message data
-                let mensaje_cantidad_testimonios = `Actualmente, hay ***${cantidad_testimonios} testimonios publicados.***`
-                let mensaje_id_testimonio = `***ID del testimonio:*** ${id_testimonio} \n`
-                let mensaje_genero_testimonio = `***Género:*** ${genero_testimonio} \n`
-                let mensaje_contenido_testimonio = `\n***Testimonio:***\n${contenido_testimonio}`
+            //     // Message data
+            //     let mensaje_cantidad_testimonios = `Actualmente, hay ***${cantidad_testimonios} testimonios publicados.***`
+            //     let mensaje_id_testimonio = `***ID del testimonio:*** ${id_testimonio} \n`
+            //     let mensaje_genero_testimonio = `***Género:*** ${genero_testimonio} \n`
+            //     let mensaje_contenido_testimonio = `\n***Testimonio:***\n${contenido_testimonio}`
 
-                return {mensaje_cantidad_testimonios, mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio}
-            }
+            //     return {mensaje_cantidad_testimonios, mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio}
+            // }
 
             // Initial data
+            let tipo_testimonio = 'publicados'
             let testimonio_actual = 0
             let cantidad_testimonios = json.length
 
             if (cantidad_testimonios > 0 && testimonio_actual < json.length){
                 // Cantidad of testimonios
-                let {mensaje_cantidad_testimonios} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+                let {mensaje_cantidad_testimonios} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios, tipo_testimonio)
                 ctx.replyWithMarkdown(mensaje_cantidad_testimonios)
 
                 // Display testimonio
