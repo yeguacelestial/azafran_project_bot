@@ -23,7 +23,7 @@ const href = 'http://exponatuagresor.herokuapp.com'
 
 /* Main functions */
 // Actualizar testimonio
-function actualizarTestimonio(json, testimonio_actual, cantidad_testimonios, tipo_testimonio){
+function actualizarTestimonioEnMensaje(json, testimonio_actual, cantidad_testimonios, tipo_testimonio){
     // Data of Testimonios
     let id_testimonio = JSON.stringify(json[testimonio_actual].id)
     let genero_testimonio = JSON.stringify(json[testimonio_actual].genero)
@@ -74,7 +74,12 @@ bot.command('ayuda', (ctx) => {
 
 // Comando para ver Testimonios recibidos
 bot.command('testimonios_recibidos', (ctx) => {
-    // Create initial keyboard
+    // Create initial keyboard (when there is only one testimonio)
+    const initial_keyboard_exclusive = Markup.inlineKeyboard([
+        Markup.callbackButton('💬Publicar', 'publicar')
+    ])
+
+    // Create initial keyboard (when there is more than one testimonio)
     const initial_keyboard = Markup.inlineKeyboard([
         Markup.callbackButton('💬Publicar', 'publicar'),
         Markup.callbackButton('Siguiente ➡️', 'siguiente')
@@ -100,15 +105,47 @@ bot.command('testimonios_recibidos', (ctx) => {
             let testimonio_actual = 0
             let cantidad_testimonios = json.length
 
-            if (cantidad_testimonios > 0 && testimonio_actual < json.length){
+            // Si solo hay un testimonio recibido...
+            if (cantidad_testimonios === 1){
                 // Cantidad of testimonios
-                let {mensaje_cantidad_testimonios} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios, tipo_testimonio)
+                let {mensaje_cantidad_testimonios} = actualizarTestimonioEnMensaje(json, testimonio_actual, cantidad_testimonios, tipo_testimonio)
                 ctx.replyWithMarkdown(mensaje_cantidad_testimonios)
 
                 // Display testimonio
                 setTimeout(() => {
                     let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} =                     
-                    actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+                    actualizarTestimonioEnMensaje(json, testimonio_actual, cantidad_testimonios)
+
+                    ctx.replyWithMarkdown(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
+                    , Extra.markdown().markup(initial_keyboard_exclusive))}, 1000)
+                
+                // Handling buttons:
+                // Button 'Publicar'
+                bot.action('publicar', ctx => {
+                    let testimonio_a_publicar = json[testimonio_actual]
+                    eataAPI.postTestimonio(api_denuncias_publicadas, testimonio_a_publicar)
+                    eataAPI.deleteTestimonio(api_denuncias_recibidas, testimonio_a_publicar.id)
+
+                    ctx.editMessageText(`Publicaste el testimonio <b>${JSON.stringify(testimonio_a_publicar.id)}.</b> Puedes ver los testimonios publicados pulsando <a href="${href}/testimonios">aqui, </a>o con el comando de /testimonios_publicados.\n\nIntroduce el comando <i>/testimonios_recibidos</i> si quieres seguir consultando los testimonios recibidos.`
+                    , Extra.HTML())
+                })
+                .catch(error => {
+                    let testimonio_a_publicar = json[testimonio_actual]
+                    ctx.reply(`No se pudo publicar el testimonio ${testimonio_a_publicar.id}.`)
+                    console.log(`[-] ERROR AL INTENTAR PUBLICAR TESTIMONIO: ${error}`)
+                })
+            }
+
+            // If hay más de un testimonio recibido...
+            else if (cantidad_testimonios > 0 && testimonio_actual < json.length){
+                // Cantidad of testimonios
+                let {mensaje_cantidad_testimonios} = actualizarTestimonioEnMensaje(json, testimonio_actual, cantidad_testimonios, tipo_testimonio)
+                ctx.replyWithMarkdown(mensaje_cantidad_testimonios)
+
+                // Display testimonio
+                setTimeout(() => {
+                    let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} =                     
+                    actualizarTestimonioEnMensaje(json, testimonio_actual, cantidad_testimonios)
 
                     ctx.replyWithMarkdown(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
                     , Extra.markdown().markup(initial_keyboard))}, 1000)
@@ -117,7 +154,7 @@ bot.command('testimonios_recibidos', (ctx) => {
                     // Button 'Siguiente'
                     bot.action('siguiente', ctx => {
                         testimonio_actual += 1
-                        let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+                        let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonioEnMensaje(json, testimonio_actual, cantidad_testimonios)
 
                         // If testimonio is the last one, display ending keyboard
                         if (testimonio_actual === json.length - 1){
@@ -132,7 +169,7 @@ bot.command('testimonios_recibidos', (ctx) => {
                     // Button 'Anterior'
                     bot.action('anterior', ctx => {
                         testimonio_actual -= 1
-                        let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+                        let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonioEnMensaje(json, testimonio_actual, cantidad_testimonios)
                         
                         // If testimonio actual is the first one, display initial keyboard
                         if (testimonio_actual === 0){
@@ -144,7 +181,7 @@ bot.command('testimonios_recibidos', (ctx) => {
                         }
                     })
                     
-                    // Button 'Eliminar'
+                    // Button 'Publicar'
                     bot.action('publicar', ctx => {
                         let testimonio_a_publicar = json[testimonio_actual]
                         eataAPI.postTestimonio(api_denuncias_publicadas, testimonio_a_publicar)
@@ -155,17 +192,16 @@ bot.command('testimonios_recibidos', (ctx) => {
                     })
                     .catch(error => {
                         let testimonio_a_publicar = json[testimonio_actual]
-                        ctx.reply(`No se pudo publicar el testimonio ${testimonio_a_publicar.id}. Contacta a @hombrecelestial y reenviale este mensaje del error:\n:${error}`)
+                        ctx.reply(`No se pudo publicar el testimonio ${testimonio_a_publicar.id}.`)
                     })
 
-            } else if (cantidad_testimonios === 0){
+            }   
+            // De lo contrario, si no hay ningún testimonio recibido...
+            else if (cantidad_testimonios === 0){
                 ctx.reply('Aún no se ha recibido ningún testimonio.')
-
-            } else {
-                ctx.reply('Sucedió algo raro. Por favor, contacta a @hombrecelestial.')
             }
         }
-    ).catch(error => {console.log(`Pasó algo raro: ${error}\n`)})
+    ).catch(error => {console.log(`[-] ERROR AL OBTENER LOS TESTIMONIOS DE LA API: ${error}\n`)})
 
 })
 
@@ -194,7 +230,7 @@ bot.command('testimonios_publicados', (ctx) => {
     eataAPI.getTestimonios(api_denuncias_publicadas).then(
         (json) => {
             // Update Inline testimonio content
-            // function actualizarTestimonio(json, testimonio_actual, cantidad_testimonios){
+            // function actualizarTestimonioEnMensaje(json, testimonio_actual, cantidad_testimonios){
             //     // Data of Testimonios
             //     let id_testimonio = JSON.stringify(json[testimonio_actual].id)
             //     let genero_testimonio = JSON.stringify(json[testimonio_actual].genero)
@@ -216,13 +252,13 @@ bot.command('testimonios_publicados', (ctx) => {
 
             if (cantidad_testimonios > 0 && testimonio_actual < json.length){
                 // Cantidad of testimonios
-                let {mensaje_cantidad_testimonios} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios, tipo_testimonio)
+                let {mensaje_cantidad_testimonios} = actualizarTestimonioEnMensaje(json, testimonio_actual, cantidad_testimonios, tipo_testimonio)
                 ctx.replyWithMarkdown(mensaje_cantidad_testimonios)
 
                 // Display testimonio
                 setTimeout(() => {
                     let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} =                     
-                    actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+                    actualizarTestimonioEnMensaje(json, testimonio_actual, cantidad_testimonios)
 
                     ctx.replyWithMarkdown(mensaje_id_testimonio+mensaje_genero_testimonio+mensaje_contenido_testimonio
                     , Extra.markdown().markup(initial_keyboard))}, 1000)
@@ -231,7 +267,7 @@ bot.command('testimonios_publicados', (ctx) => {
                     // Button 'Siguiente'
                     bot.action('siguiente', ctx => {
                         testimonio_actual += 1
-                        let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+                        let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonioEnMensaje(json, testimonio_actual, cantidad_testimonios)
 
                         // If testimonio is the last one, display ending keyboard
                         if (testimonio_actual === json.length - 1){
@@ -246,7 +282,7 @@ bot.command('testimonios_publicados', (ctx) => {
                     // Button 'Anterior'
                     bot.action('anterior', ctx => {
                         testimonio_actual -= 1
-                        let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonio(json, testimonio_actual, cantidad_testimonios)
+                        let {mensaje_id_testimonio, mensaje_genero_testimonio, mensaje_contenido_testimonio} = actualizarTestimonioEnMensaje(json, testimonio_actual, cantidad_testimonios)
                         
                         // If testimonio actual is the first one, display initial keyboard
                         if (testimonio_actual === 0){
@@ -279,7 +315,11 @@ bot.command('testimonios_publicados', (ctx) => {
 })
 
 // Launch bot
+console.log('[*] Inicializando bot...')
 bot.launch()
+    .then( () => console.log('[+] El bot está VIVO.'))
+    .catch(error => console.log(`[-] ERROR AL LANZAR EL BOT: ${error}`))
+
 
 /* Other things */
 

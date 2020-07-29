@@ -14,7 +14,8 @@ function getTestimonios(endpoint_url){
         )
         .then(
             (testimonios) => {return testimonios}
-        ).catch(error => {console.log(`Pasó algo raro: ${error}\n`)})
+        ).catch(error => {console.log(`[-] SE INTENTARON OBTENER LOS TESTIMONIOS, Y HUBO UN ERROR: 
+        ${error}\n`)})
 }
 
 // Function for posting testimonios
@@ -27,8 +28,8 @@ function postTestimonio(endpoint_url, json_testimonio){
         }
     })
         .then(res => res.json())
-        .then(json => {console.log(`[+] Success: ${JSON.stringify(json)}`);return json})
-        .catch(error => console.error(`[-] Error: ${error}`))
+        .then(json => {return json})
+        .catch(error => console.error(`[-] SE INTENTÓ POSTEAR UN TESTIMONIO, Y HUBO UN ERROR: ${error}`))
 }
 
 // Function for deleting testimonios
